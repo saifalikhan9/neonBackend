@@ -1,42 +1,40 @@
-import mongoose, { Schema } from "mongoose";
-import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
+import mongoose,{Schema} from "mongoose";
+const orderSchema = new Schema(
+  {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    orderItems:{
+        type : mongoose.Schema.Types.ObjectId,
+        ref: "OrderItem",
+        required :true
+    },
 
-const orderSchema = new Schema({
-  text: {
-    type: String,
-    required: true,
+    totalAmount: {
+      type: Number,
+      required: true,
+    },
+    shippingAddress: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Address",
+      required: true,
+    },
+    paymentStatus: {
+      type: String,
+      enum: ["pending", "completed", "failed"],
+      default: "pending",
+    },
+    orderStatus: {
+      type: String,
+      enum: ["processing", "shipped", "delivered", "cancelled"],
+      default: "processing",
+    },
   },
-  font: {
-    type: String,
-    required: true,
-  },
-  color: {
-    type: String,
-    required: true,
-  },
-  textSize: {
-    type: String,
-    required: true,
-  },
-  price: {
-    type: String,
-    required: true,
-  },
-  imageUrl: {
-    type: String,
-    required: true,
-  },
-
-  owner: {
-    type: Schema.Types.ObjectId,
-    ref: "User",
-  },
-},
-{
-  timestamps: true,
-}
+  {
+    timestamps: true,
+  }
 );
-
-orderSchema.plugin(mongooseAggregatePaginate);
 
 export const Order = mongoose.model("Order", orderSchema);

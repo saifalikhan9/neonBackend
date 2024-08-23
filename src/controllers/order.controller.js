@@ -1,127 +1,163 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
-import { Order } from "../models/order.model.js";
-import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { ApiError } from "../utils/ApiError.js";
 
-const createOrder = asyncHandler(async (req, res) => {
+import { Order } from '../models/order.model.js';
+import { Cart } from '../models/cart.model.js';
+import { Address } from '../models/address.model.js';
+import { User } from '../models/user.model.js';
 
-  const { text, font , price } = req.body;
-  const color = req.body.color
-  const textSize = req.body.textSize
-
-  const file = req.files?.imageUrl[0]?.path; // File uploaded via multer
+// Create a new order
+const createOrder =  asyncHandler(async (req, res) => {
   
-  if (!file) {
-    return res.status(400).json({ error: "Image file is required" });
-  }
-
+  
   try {
-    // Upload the image to Cloudinary
-    const result = await uploadOnCloudinary(file);
-    
-    if (!result) {
-      return res.status(500).json({ error: "Image upload to Cloudinary failed" });
+    const { product, totalAmount, shippingAddress, orderItems } = req.body;
+    const userId = req.user._id
+
+   // Validate user, product, and address existence
+    const user = await User.findById(userId);
+    const cartItem = await Cart.findById(product);
+    const address = await Address.findById(shippingAddress);
+
+    if (!user || !cartItem || !address) {
+      throw new ApiError(404, "User, Product, or Address not found");
+      
+
     }
 
-    const imageUrl = result.secure_url;
+    // Create the order
+    const newOrder = new Order({
+      userId,
+      orderItems,
+      product,
+      totalAmount,
+      shippingAddress,
+    });
 
-    const newOrder = new Order({ text, font, color, textSize, price, imageUrl, owner: req.user._id });
     await newOrder.save();
 
-    return res.status(201).json(newOrder);
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
-});
-
-const getOrders = asyncHandler(async (req, res) => {
-  const userId = req.user._id;
-
-  if (!userId) {
-      return res.status(400).json({ error: "Failed" });
-  }
-
-  try {
-      const orders = await Order.find({ owner: userId });
-
-      if (!orders) {
-        throw new ApiError(404, "no orders")
-          
-      }
-
-      return res.status(200).json(new ApiResponse(200, orders, "Success"));
+     res.json(new ApiResponse(201, [newOrder],  "order saved"));
   } catch (error) {
-      return res.status(500).json(new ApiResponse(500, [], "Server error"));
+    return res.status(500).json({
+      success: false,
+      message: 'Error creating order',
+      error: error.message,
+    });
   }
 });
 
-// const deleteOrder = asyncHandler(async (req, res) => {
-//   const userId = req.user._id;
-//   const orderId = req.params.id;
-
-//   if (!userId) {
-//       return res.status(400).json({ error: "User not authenticated" });
-//   }
-
-//   try {
-//       const order = await Order.findById(orderId);
-//       console.log(orderId);
-      
-//       if (!order) {
-//         throw new ApiError(404, "Order not found")
-          
-//       }
-
-        
-//       if (order.user.toString() !== userId.toString()) {
-//         throw new ApiError(401,"Not authorized to delete this order")
-          
-//       }
-
-//        const remove =  await Order.findByIdAndDelete(order._id)
-       
-
-//       return res.status(200).json(new ApiResponse(200, [remove], "Order deleted successfully"));
-//   } catch (error) {
-//     throw new ApiError(500, "Server error" )
-      
-//   }
-// });
-
-const deleteOrder = asyncHandler(async (req, res) => {
-  const userId = req.user._id;
-  const orderId = req.params.id;
-
-  if (!userId) {
-    return res.status(400).json({ error: "User not authenticated" });
-  }
-
+// Update an existing order
+const updateOrder = async (req, res) => {
   try {
-    const order = await Order.findById(orderId);
+    const { id } = req.params;
+    const { orderStatus, paymentStatus } = req.body;
+
+    // Update the order's status
+    const updatedOrder = await Order.findByIdAndUpdate(
+      id,
+      {
+        orderStatus,
+        paymentStatus,
+      },
+      { new: true }
+    );
+
+    if (!updatedOrder) {
+      return res.status(404).json({
+        success: false,
+        message: 'Order not found',
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Order updated successfully',
+      data: updatedOrder,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: 'Error updating order',
+      error: error.message,
+    });
+  }
+};
+
+// Get all orders for a user
+const getOrdersByUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const orders = await Order.find({ userId }).populate('product').populate('shippingAddress');
+
+    return res.status(200).json({
+      success: true,
+      message: 'Orders fetched successfully',
+      data: orders,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: 'Error fetching orders',
+      error: error.message,
+    });
+  }
+};
+
+// Get a specific order by ID
+const getOrderById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const order = await Order.findById(id).populate('product').populate('shippingAddress');
 
     if (!order) {
-      throw new ApiError(404, "Order not found");
+      return res.status(404).json({
+        success: false,
+        message: 'Order not found',
+      });
     }
 
-    if (order.owner.toString() !== userId.toString()) {
-      throw new ApiError(401, "Not authorized to delete this order");
-    }
-
-    const removedOrder = await Order.findByIdAndDelete(order._id);
-
-    return res.status(200).json(new ApiResponse(200, [removedOrder], "Order deleted successfully"));
+    return res.status(200).json({
+      success: true,
+      message: 'Order fetched successfully',
+      data: order,
+    });
   } catch (error) {
-    console.error('Error in deleteOrder:', error);  // Add this line to log the error details
+    return res.status(500).json({
+      success: false,
+      message: 'Error fetching order',
+      error: error.message,
+    });
+  }
+};
 
-    if (error instanceof ApiError) {
-      return res.status(error.statusCode).json({ error: error.message });
+// Delete an order
+const deleteOrder = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const deletedOrder = await Order.findByIdAndDelete(id);
+
+    if (!deletedOrder) {
+      return res.status(404).json({
+        success: false,
+        message: 'Order not found',
+      });
     }
 
-    return res.status(500).json(new ApiError(500, "Server error"));
+    return res.status(200).json({
+      success: true,
+      message: 'Order deleted successfully',
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: 'Error deleting order',
+      error: error.message,
+    });
   }
-});
+};
 
-
-
-export { createOrder,getOrders,deleteOrder };
+export { createOrder, updateOrder, getOrdersByUser, getOrderById, deleteOrder };

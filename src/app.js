@@ -20,11 +20,21 @@ app.use(cookieParser());
 
 //routes import
 import userRouter from "./routes/user.routes.js";
+import cartRouter from "./routes/cart.routes.js"
+import adminRouter from "./routes/admin.routes.js"
+import addressRouter from "./routes/address.routes.js"
+import OrderItemRouter from "./routes/orderItem.routes.js"
 import orderRouter from "./routes/order.routes.js"
+import paymentRouter from "./routes/payment.routes.js"
 
 //routes declaration
 app.use("/api/v1/users", userRouter);
-app.use("/api/v1", orderRouter);
+app.use("/api/v1/cart", cartRouter);
+app.use("/api/v1/admin", adminRouter);
+app.use("/api/v1/address", addressRouter);
+app.use("/api/v1/orderitem", OrderItemRouter);
+app.use("/api/v1/order", orderRouter);
+app.use("/api/v1/payment", paymentRouter);
 
 // http://localhost:8000/api/v1/users/register
 

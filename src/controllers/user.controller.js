@@ -28,15 +28,15 @@ const generateAccessAndRefereshTokens = async (userId) => {
 
 // Register User Controller
 const registerUser = asyncHandler(async (req, res) => {
-  const { mobNum, fullName, email, password } = req.body;
+  const { phone, fullName, email, password } = req.body;
 
   if (
-    [fullName, email, password, mobNum].some((field) => field?.trim() === "")
+    [fullName, email, password, phone].some((field) => field?.trim() === "")
   ) {
     throw new ApiError(400, "All fields are required");
   }
 
-  const existedUser = await User.findOne({ $or: [{ mobNum }, { email }] });
+  const existedUser = await User.findOne({ $or: [{ phone }, { email }] });
   if (existedUser) {
     throw new ApiError(409, "User already exists");
   }
@@ -44,7 +44,7 @@ const registerUser = asyncHandler(async (req, res) => {
  
 
   const user = await User.create({
-    mobNum, 
+    phone, 
     fullName,
     email,
     password,

@@ -9,7 +9,7 @@ dotenv.config({
 
 const userSchema = new Schema(
   {
-    mobNum: {
+    phone: {
       type: String,
       required: true,
       unique: true,
@@ -34,9 +34,17 @@ const userSchema = new Schema(
       type: String,
       required: true,
     },
+    addresses: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Address',
+    }],
     refreshToken: {
       type: String,
     },
+    isAdmin : {
+      type : Boolean,
+      default: false
+    }
   },
   {
     timestamps: true,
