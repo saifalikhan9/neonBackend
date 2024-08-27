@@ -3,7 +3,8 @@ import { verifyJWT } from "../middlewares/auth.middleware.js";
 import {
     createCartItems,
     getAllItems,
-    deleteOrder
+    deleteOrder,
+    deleteAllItems
 } from '../controllers/cart.controller.js'
 import {upload} from '../middlewares/multer.js'
 
@@ -19,5 +20,7 @@ router.route("/addToCart").post( verifyJWT, upload.fields([{
 router.route("/items").get(verifyJWT,getAllItems)
 router.route('/delete/:id')
     .delete(verifyJWT,deleteOrder);
+
+router.route("/clear").delete(verifyJWT,deleteAllItems);
 
 export default router;

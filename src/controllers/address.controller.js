@@ -90,21 +90,6 @@ const id=req.user.id
   return res.json(new ApiResponse(200, address, " Current User"));
   
 });
-// Example backend modification (Node.js/Express)
-// const getAllAddresses = async (req, res) => {
-//   try {
-//     const addresses = await Address.find({ userId: req.user.id });
-//     console.log(addresses);
-    
-//     res.status(200).json({
-//       success: true,
-//       data: addresses,
-//     });
-//   } catch (error) {
-//     res.status(500).json({ error: "Server Error" });
-//   }
-// };
-
 
 
 // Delete an address

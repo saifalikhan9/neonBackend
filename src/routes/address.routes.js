@@ -5,7 +5,7 @@ import {deleteAddress,getAllAddresses,editAddress,createAddress} from "../contro
 const router = Router();
 router.use(verifyJWT)
 router.route("/addAddress").post(createAddress)
-router.route("/editAddress/:id").post(editAddress)
+router.route("/editAddress/:id").put(editAddress)
 router.route("/getAllAddress").get(getAllAddresses)
 router.route("/delete/:id").delete(deleteAddress)
 

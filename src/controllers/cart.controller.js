@@ -131,4 +131,32 @@ const deleteOrder = asyncHandler(async (req, res) => {
   }
 });
 
-export { createCartItems, getAllItems, deleteOrder };
+// Delete all items in the cart for the authenticated user
+const deleteAllItems = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
+
+  if (!userId) {
+    return res.status(400).json({ error: "User not authenticated" });
+  }
+
+  try {
+    const result = await Cart.deleteMany({ userId: userId });
+
+    if (result.deletedCount === 0) {
+      throw new ApiError(404, "No items found in the cart");
+    }
+
+    return res.status(200).json(new ApiResponse(200, [], "All items deleted successfully"));
+  } catch (error) {
+    console.error("Error in deleteAllItems:", error);
+
+    if (error instanceof ApiError) {
+      return res.status(error.statusCode).json({ error: error.message });
+    }
+
+    return res.status(500).json(new ApiResponse(500, [], "Server error"));
+  }
+});
+
+
+export { createCartItems, getAllItems, deleteOrder, deleteAllItems };
